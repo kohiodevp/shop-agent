@@ -1,0 +1,23 @@
+# === Secrets / signing ===
+release.keystore
+*.keystore
+keystore.properties
+local.properties
+
+# === Build outputs ===
+app/build/
+build/
+.gradle/
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+
+# === IDE / OS ===
+*.iml
+.idea/
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+*.log

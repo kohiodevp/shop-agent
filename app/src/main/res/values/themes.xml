@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Thème window : thème platform natif (aucune dépendance Compose).
+         Le thème Compose (Material3) est géré en mémoire par MaterialTheme. -->
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/primary</item>
+    </style>
+    <style name="AppTheme.NoActionBar" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
