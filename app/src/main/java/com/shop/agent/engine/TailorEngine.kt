@@ -1,5 +1,8 @@
 package com.shop.agent.engine
 
+import com.shop.agent.data.Product
+import com.shop.agent.data.SaleItem
+
 /**
  * Moteur métier du Tailleur — version Kotlin pur (équivalent du moteur Python).
  * Calcul du métrage par type de vêtement, gradation des tailles,
@@ -129,4 +132,39 @@ object TailorEngine {
 
     private fun escape(s: String): String =
         s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+    // ===================== RETAIL / BOUTIQUE =====================
+
+    /**
+     * Calcule le montant total d'une vente = somme(ligne.prix_unitaire * quantité - remise).
+     */
+    fun calculateSaleTotal(items: List<SaleItem>): Double {
+        var total = 0.0
+        for (it in items) total += it.unitPrice * it.quantity - it.discount
+        return Math.round(total * 100.0) / 100.0
+    }
+
+    /**
+     * Calcule le stock restant après une vente (décrémente le stock du produit).
+     * Garantit un stock >= 0.
+     */
+    fun stockAfterSale(product: Product, items: List<SaleItem>): Int {
+        val sold = items.filter { it.productId == product.id }.sumOf { it.quantity }
+        return maxOf(0, product.stock - sold)
+    }
+
+    /**
+     * Vrai si le stock est sous (ou égal) au seuil d'alerte.
+     */
+    fun isLowStock(product: Product): Boolean = product.stock <= product.alertThreshold
+
+    /**
+     * Marge unitaire d'un produit (prix_vente - prix_achat).
+     */
+    fun margin(product: Product): Double = Math.round((product.sellPrice - product.buyPrice) * 100.0) / 100.0
+
+    /**
+     * Vrai si le stock est suffisant pour la quantité demandée (pour une vente).
+     */
+    fun canSell(product: Product, quantity: Int): Boolean = product.stock >= quantity
 }
