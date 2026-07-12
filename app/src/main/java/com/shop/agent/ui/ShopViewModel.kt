@@ -28,9 +28,8 @@ class ShopViewModel(private val db: ShopDb) : ViewModel() {
 
     fun addToCart(p: Product) {
         if (p.stock <= 0) { _uiMessage.tryEmit("Stock épuisé : ${p.name}"); return }
-        if (engine.lines().any { it.product.id == p.id } && engine.qtyOf(p.id) >= p.stock) {
-            _uiMessage.tryEmit("Stock max atteint pour ${p.name}"); return
-        }
+        val current = engine.lines().find { it.product.id == p.id }?.qty ?: 0
+        if (current >= p.stock) { _uiMessage.tryEmit("Stock max atteint pour ${p.name}"); return }
         engine.add(p); refreshCart()
     }
     fun removeFromCart(id: Long) { engine.remove(id); refreshCart() }
