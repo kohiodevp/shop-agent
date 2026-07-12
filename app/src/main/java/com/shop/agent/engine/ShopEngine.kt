@@ -16,6 +16,19 @@ class ShopEngine {
         else cart.add(CartLine(product, qty))
     }
 
+    /** Définit la quantité exacte (utile pour l'édition directe). */
+    fun setQty(productId: Long, qty: Int) {
+        val line = cart.find { it.product.id == productId } ?: return
+        if (qty <= 0) cart.remove(line)
+        else line.qty = qty
+    }
+
+    fun incrementQty(productId: Long, by: Int = 1) {
+        val line = cart.find { it.product.id == productId } ?: return
+        line.qty += by
+        if (line.qty <= 0) cart.remove(line)
+    }
+
     fun remove(productId: Long) {
         cart.removeIf { it.product.id == productId }
     }
@@ -34,8 +47,9 @@ class ShopEngine {
             val o = JSONObject()
             o.put("id", it.product.id)
             o.put("name", it.product.name)
-            o.put("price", it.product.price)
+            o.put("price", it.product.price)   // snapshot prix unitaire
             o.put("qty", it.qty)
+            o.put("subtotal", it.qty * it.product.price)
             arr.put(o)
         }
         return Sale(total = total(), items = arr.toString())
