@@ -25,9 +25,9 @@ android {
     signingConfigs {
         release {
             storeFile file('../release.keystore')
-            storePassword project.findProperty('RELEASE_STORE_PASSWORD') ?: 'shop1234'
+            storePassword project.findProperty('RELEASE_STORE_PASSWORD') ?: 'shop123'
             keyAlias project.findProperty('RELEASE_KEY_ALIAS') ?: 'shop'
-            keyPassword project.findProperty('RELEASE_KEY_PASSWORD') ?: 'shop1234'
+            keyPassword project.findProperty('RELEASE_KEY_PASSWORD') ?: 'shop123'
         }
     }
 
@@ -74,7 +74,12 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1'
     implementation 'androidx.activity:activity-compose:1.6.1'
 
-    // Compose (versions explicites, Kotlin 1.8.22 / Compose 1.4.3)
+    // Room
+    implementation 'androidx.room:room-runtime:2.5.1'
+    implementation 'androidx.room:room-ktx:2.5.1'
+    kapt 'androidx.room:room-compiler:2.5.1'
+
+    // Compose
     implementation 'androidx.compose.ui:ui:1.4.3'
     implementation 'androidx.compose.ui:ui-graphics:1.4.3'
     implementation 'androidx.compose.ui:ui-tooling-preview:1.4.3'
