@@ -25,6 +25,12 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY name ASC")
     fun all(): Flow<List<Product>>
 
+    @Query("SELECT * FROM products WHERE name LIKE :q || '%' OR barcode LIKE :q || '%' ORDER BY name ASC")
+    fun search(q: String): Flow<List<Product>>
+
+    @Query("SELECT * FROM products WHERE id = :id")
+    suspend fun getById(id: Long): Product?
+
     @Insert
     suspend fun insert(p: Product): Long
 
@@ -36,6 +42,9 @@ interface ProductDao {
 
     @Query("UPDATE products SET stock = stock - :qty WHERE id = :id")
     suspend fun decrementStock(id: Long, qty: Int)
+
+    @Query("UPDATE products SET stock = stock + :qty WHERE id = :id")
+    suspend fun incrementStock(id: Long, qty: Int)
 }
 
 @Dao
@@ -43,8 +52,14 @@ interface SaleDao {
     @Query("SELECT * FROM sales ORDER BY timestamp DESC")
     fun all(): Flow<List<Sale>>
 
+    @Query("SELECT * FROM sales WHERE total LIKE :q || '%' OR items LIKE :q || '%' ORDER BY timestamp DESC")
+    fun search(q: String): Flow<List<Sale>>
+
     @Insert
     suspend fun insert(s: Sale): Long
+
+    @Query("DELETE FROM sales")
+    suspend fun clear()
 }
 
 @Database(entities = [Product::class, Sale::class], version = 1, exportSchema = false)
