@@ -84,12 +84,12 @@ fun CatalogueTab(vm: ShopViewModel, modifier: Modifier = Modifier) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = price, onValueChange = { price = it }, label = { Text("Prix (FCFA)") },
-                    modifier = weight(1f), singleLine = true,
+                    modifier = Modifier.weight(1f), singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 OutlinedTextField(
                     value = stock, onValueChange = { stock = it }, label = { Text("Stock") },
-                    modifier = weight(1f), singleLine = true,
+                    modifier = Modifier.weight(1f), singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
