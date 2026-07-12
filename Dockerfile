@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Variables Android SDK
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
-ENV PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+ENV PATH=\$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
 
 # Installer Android command-line tools (compatible JDK 17)
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
@@ -33,8 +33,16 @@ ENV GRADLE_USER_HOME=/opt/gradle-home
 
 WORKDIR /workspace
 
-# Build de l'APK au moment du build de l'image
 COPY . /workspace
 
+# Generer un keystore de release reproductible (pour APK signe)
+RUN keytool -genkeypair -v \
+    -keystore /workspace/release.keystore \
+    -keyalg RSA -keysize 2048 -validity 10000 \
+    -alias shop -storepass shop123 -keypass shop123 \
+    -dname "CN=Shop Agent, OU=BOS, O=Betsaleel, L=Bobo-Dioulasso, ST=Hauts-Bassins, C=BF" \
+    && echo "KEYSTORE generated"
+
+# Build de l'APK au moment du build de l'image
 RUN gradle app:assembleRelease --no-daemon --stacktrace \
     || ./gradlew app:assembleRelease --no-daemon --stacktrace
