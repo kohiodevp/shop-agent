@@ -1,6 +1,7 @@
 package com.shop.agent.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,11 +30,8 @@ fun ShopScreens(vm: ShopViewModel) {
     val cartCount by vm.cartCount.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Snackbar messages
     LaunchedEffect(Unit) {
-        vm.uiMessage.collectLatest { msg ->
-            snackbarHostState.showSnackbar(msg)
-        }
+        vm.uiMessage.collectLatest { msg -> snackbarHostState.showSnackbar(msg) }
     }
 
     Scaffold(
@@ -41,9 +39,9 @@ fun ShopScreens(vm: ShopViewModel) {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Store, null, tint = Color.White)
+                        Icon(Icons.Filled.Store, null, tint = Color.White, modifier = Modifier.size(26.dp))
                         Spacer(Modifier.width(10.dp))
-                        Text("Shop Agent", fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                        Text("Shop Agent", fontWeight = FontWeight.Bold, fontSize = 21.sp)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -75,7 +73,18 @@ fun ShopScreens(vm: ShopViewModel) {
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (tab == 0) {
+                ExtendedFloatingActionButton(
+                    onClick = { tab = 1 },
+                    icon = { Icon(Icons.Filled.ShoppingCart, null) },
+                    text = { Text("Panier ($cartCount)") },
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = Color.White
+                )
+            }
+        }
     ) { padding ->
         when (tab) {
             0 -> CatalogueTab(vm, Modifier.padding(padding))
@@ -89,6 +98,7 @@ fun ShopScreens(vm: ShopViewModel) {
 @Composable
 fun CatalogueTab(vm: ShopViewModel, modifier: Modifier = Modifier) {
     val products by vm.products.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var stock by remember { mutableStateOf("") }
@@ -99,44 +109,76 @@ fun CatalogueTab(vm: ShopViewModel, modifier: Modifier = Modifier) {
     ) {
         item {
             Spacer(Modifier.height(8.dp))
-            Text("Nouveau produit", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            OutlinedTextField(
-                value = name, onValueChange = { name = it }, label = { Text("Nom du produit") },
-                modifier = Modifier.fillMaxWidth(), singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = price, onValueChange = { price = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Prix (FCFA)") }, modifier = Modifier.weight(1f), singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = stock, onValueChange = { stock = it.filter { c -> c.isDigit() } },
-                    label = { Text("Stock") }, modifier = Modifier.weight(1f), singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-            Button(
-                onClick = {
-                    val p = price.toDoubleOrNull(); val s = stock.toIntOrNull()
-                    if (name.isNotBlank() && p != null && s != null && p > 0) {
-                        vm.addProduct(name.trim(), p, s); name = ""; price = ""; stock = ""
+            // Section repliable
+            Card(
+                onClick = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.AddBusiness, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Spacer(Modifier.width(10.dp))
+                        Text("Ajouter un produit", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
-                },
-                modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(12.dp)
-            ) { Icon(Icons.Filled.Add, null); Spacer(Modifier.width(8.dp)); Text("Ajouter au catalogue", fontSize = 16.sp) }
-            Spacer(Modifier.height(12.dp))
-            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-            Spacer(Modifier.height(8.dp))
+                    Icon(
+                        if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        null, tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+        if (expanded) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        OutlinedTextField(
+                            value = name, onValueChange = { name = it }, label = { Text("Nom du produit") },
+                            modifier = Modifier.fillMaxWidth(), singleLine = true, shape = RoundedCornerShape(12.dp)
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = price, onValueChange = { price = it.filter { c -> c.isDigit() || c == '.' } },
+                                label = { Text("Prix (FCFA)") }, modifier = Modifier.weight(1f), singleLine = true,
+                                shape = RoundedCornerShape(12.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
+                            OutlinedTextField(
+                                value = stock, onValueChange = { stock = it.filter { c -> c.isDigit() } },
+                                label = { Text("Stock") }, modifier = Modifier.weight(1f), singleLine = true,
+                                shape = RoundedCornerShape(12.dp), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            )
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                val p = price.toDoubleOrNull(); val s = stock.toIntOrNull()
+                                if (name.isNotBlank() && p != null && s != null && p > 0) {
+                                    vm.addProduct(name.trim(), p, s); name = ""; price = ""; stock = ""
+                                    expanded = false
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(12.dp)
+                        ) { Icon(Icons.Filled.Check, null); Spacer(Modifier.width(8.dp)); Text("Confirmer", fontSize = 16.sp) }
+                    }
+                }
+            }
+        }
+        item {
+            Spacer(Modifier.height(4.dp))
             Text("${products.size} article(s) en stock", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (products.isEmpty()) {
-            item {
-                EmptyState(Icons.Filled.Inventory2, "Aucun produit", "Ajoute ton premier article ci-dessus")
-            }
+            item { EmptyState(Icons.Filled.Inventory2, "Aucun produit", "Ouvre \"Ajouter un produit\" ci-dessus") }
         } else {
             items(products) { p -> ProductCard(p) { vm.addToCart(p) } }
         }
@@ -160,11 +202,15 @@ fun ProductCard(p: Product, onAdd: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(p.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(4.dp))
-                Text("${p.price.toInt()} FCFA", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Sell, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(4.dp))
+                    Text("${p.price.toInt()} FCFA", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
                 Spacer(Modifier.height(6.dp))
                 AssistChip(
                     onClick = {},
-                    label = { Text(if (out) "Rupture de stock" else "Stock: ${p.stock}", fontSize = 12.sp) },
+                    label = { Text(if (out) "Rupture" else "Stock: ${p.stock}", fontSize = 12.sp) },
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = if (out) Color(0xFFFFEBEE) else Color(0xFFE8F5E9),
                         labelColor = if (out) Color(0xFFC62828) else Color(0xFF2E7D32)
@@ -245,22 +291,52 @@ fun SalesTab(vm: ShopViewModel, modifier: Modifier = Modifier) {
     ) {
         item { Spacer(Modifier.height(8.dp)) }
         if (sales.isEmpty()) {
-            item { EmptyState(Icons.Filled.ReceiptLong, "Aucune vente", "Les ventes validées apparaîtront ici") }
+            item {
+                EmptyState(
+                    Icons.Filled.ReceiptLong, "Aucune vente",
+                    "Les ventes validées apparaîtront ici.\nLe total cumulé sera affiché en bas."
+                )
+            }
         }
+        val totalCumule = sales.sumOf { it.total.toInt() }
         items(sales) { s: Sale ->
-            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { },
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Vente #${s.id}", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("Vente #${s.id}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(4.dp))
-                        Text(s.timestamp.toString().take(19).replace("T", " "), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(s.timestamp.toString().take(19).replace("T", " "), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f))
                     }
-                    Text("${s.total.toInt()} FCFA", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("${s.total.toInt()} FCFA", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                    }
+                }
+            }
+        }
+        if (sales.isNotEmpty()) {
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total cumulé", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("$totalCumule FCFA", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
                 }
             }
         }
@@ -271,10 +347,10 @@ fun SalesTab(vm: ShopViewModel, modifier: Modifier = Modifier) {
 @Composable
 fun EmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp, horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 56.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(icon, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+        Icon(icon, null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
         Spacer(Modifier.height(16.dp))
         Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
